@@ -13,7 +13,7 @@ uid: signalr/streaming
 
 By [Brennan Conroy](https://github.com/BrennanConroy)
 
-::: moniker range="= aspnetcore-2.2"
+::: moniker range="< aspnetcore-3.0"
 
 ASP.NET Core SignalR supports streaming return values of server methods. This is useful for scenarios where fragments of data will come in over time. When a return value is streamed to the client, each fragment is sent to the client as soon as it becomes available, rather than waiting for all the data to become available.
 
@@ -58,13 +58,16 @@ In ASP.NET Core 2.2 or later, server to client streaming Hub methods can accept 
 A hub method automatically becomes a client to server streaming hub method when it accepts a `ChannelReader<T>`. Below is a sample that shows the basics of reading streaming data from the client. Whenever the client writes to the stream the data is writtin into the `ChannelReader` which the hub method should be reading from.
 
 ```
-public async Task ReadStream(ChannelReader<string> stream)
+public class StreamHub : Hub
 {
-    while (await stream.WaitToReadAsync())
+    public async Task ReadStream(ChannelReader<string> stream)
     {
-        while (stream.TryRead(out var item))
+        while (await stream.WaitToReadAsync())
         {
-            // do something with the stream item
+            while (stream.TryRead(out var item))
+            {
+                // do something with the stream item
+            }
         }
     }
 }
@@ -125,7 +128,7 @@ Console.WriteLine("Streaming completed");
 
 ::: moniker range=">= aspnetcore-3.0"
 
-### Server to client streaming
+### Client to server streaming
 
 TODO
 
