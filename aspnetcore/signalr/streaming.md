@@ -13,16 +13,28 @@ uid: signalr/streaming
 
 By [Brennan Conroy](https://github.com/BrennanConroy)
 
+::: moniker range="= aspnetcore-2.2"
+
 ASP.NET Core SignalR supports streaming return values of server methods. This is useful for scenarios where fragments of data will come in over time. When a return value is streamed to the client, each fragment is sent to the client as soon as it becomes available, rather than waiting for all the data to become available.
+
+::: moniker-end
+
+::: moniker range=">= aspnetcore-3.0"
+
+ASP.NET Core SignalR supports streaming from client to server and from server to client. This is useful for scenarios where fragments of data will come in over time. When streaming, each fragment is sent to the client or server as soon as it becomes available, rather than waiting for all the data to become available.
+
+::: moniker-end
 
 [View or download sample code](https://github.com/aspnet/Docs/tree/live/aspnetcore/signalr/streaming/sample) ([how to download](xref:index#how-to-download-a-sample))
 
-## Set up the hub
+## Set up the hub for streaming
 
-A hub method automatically becomes a streaming hub method when it returns a `ChannelReader<T>` or a `Task<ChannelReader<T>>`. Below is a sample that shows the basics of streaming data to the client. Whenever an object is written to the `ChannelReader` that object is immediately sent to the client. At the end, the `ChannelReader` is completed to tell the client the stream is closed.
+### Server to client streaming
+
+A hub method automatically becomes a server to client streaming hub method when it returns a `ChannelReader<T>` or a `Task<ChannelReader<T>>`. Below is a sample that shows the basics of streaming data to the client. Whenever an object is written to the `ChannelWriter` that object is immediately sent to the client. At the end, the `ChannelWriter` is completed to tell the client the stream is closed.
 
 > [!NOTE]
-> * Write to the `ChannelReader` on a background thread and return the `ChannelReader` as soon as possible. Other hub invocations will be blocked until a `ChannelReader` is returned.
+> * Write to the `ChannelWriter` on a background thread and return the `ChannelReader` as soon as possible. Other hub invocations will be blocked until a `ChannelReader` is returned.
 > * Wrap your logic in a `try ... catch` and complete the `Channel` in the catch and outside the catch to make sure the hub method invocation is completed properly.
 
 ::: moniker range="= aspnetcore-2.1"
@@ -35,13 +47,36 @@ A hub method automatically becomes a streaming hub method when it returns a `Cha
 
 [!code-csharp[Streaming hub method](streaming/sample/Hubs/StreamHub.cs?name=snippet1)]
 
-In ASP.NET Core 2.2 or later, streaming Hub methods can accept a `CancellationToken` parameter that will be triggered when the client unsubscribes from the stream. Use this token to stop the server operation and release any resources if the client disconnects before the end of the stream.
+In ASP.NET Core 2.2 or later, server to client streaming Hub methods can accept a `CancellationToken` parameter that will be triggered when the client unsubscribes from the stream. Use this token to stop the server operation and release any resources if the client disconnects before the end of the stream.
+
+::: moniker-end
+
+::: moniker range=">= aspnetcore-3.0"
+
+### Client to server streaming
+
+A hub method automatically becomes a client to server streaming hub method when it accepts a `ChannelReader<T>`. Below is a sample that shows the basics of reading streaming data from the client. Whenever the client writes to the stream the data is writtin into the `ChannelReader` which the hub method should be reading from.
+
+```
+public async Task ReadStream(ChannelReader<string> stream)
+{
+    while (await stream.WaitToReadAsync())
+    {
+        while (stream.TryRead(out var item))
+        {
+            // do something with the stream item
+        }
+    }
+}
+```
 
 ::: moniker-end
 
 ## .NET client
 
-The `StreamAsChannelAsync` method on `HubConnection` is used to invoke a streaming method. Pass the hub method name, and arguments defined in the hub method to `StreamAsChannelAsync`. The generic parameter on `StreamAsChannelAsync<T>` specifies the type of objects returned by the streaming method. A `ChannelReader<T>` is returned from the stream invocation, and represents the stream on the client. To read data, a common pattern is to loop over `WaitToReadAsync` and call `TryRead` when data is available. The loop will end when the stream has been closed by the server, or the cancellation token passed to `StreamAsChannelAsync` is canceled.
+### Server to client streaming
+
+The `StreamAsChannelAsync` method on `HubConnection` is used to invoke a server to client streaming method. Pass the hub method name, and arguments defined in the hub method to `StreamAsChannelAsync`. The generic parameter on `StreamAsChannelAsync<T>` specifies the type of objects returned by the streaming method. A `ChannelReader<T>` is returned from the stream invocation, and represents the stream on the client. To read data, a common pattern is to loop over `WaitToReadAsync` and call `TryRead` when data is available. The loop will end when the stream has been closed by the server, or the cancellation token passed to `StreamAsChannelAsync` is canceled.
 
 ::: moniker range=">= aspnetcore-2.2"
 
@@ -88,9 +123,19 @@ Console.WriteLine("Streaming completed");
 
 ::: moniker-end
 
+::: moniker range=">= aspnetcore-3.0"
+
+### Server to client streaming
+
+TODO
+
+::: moniker-end
+
 ## JavaScript client
 
-JavaScript clients call streaming methods on hubs by using `connection.stream`. The `stream` method accepts two arguments:
+### Server to client streaming
+
+JavaScript clients call server to client streaming methods on hubs by using `connection.stream`. The `stream` method accepts two arguments:
 
 * The name of the hub method. In the following example, the hub method name is `Counter`.
 * Arguments defined in the hub method. In the following example, the arguments are: a count for the number of stream items to receive, and the delay between stream items.
@@ -108,6 +153,14 @@ To end the stream from the client, call the `dispose` method on the `ISubscripti
 ::: moniker range=">= aspnetcore-2.2"
 
 To end the stream from the client, call the `dispose` method on the `ISubscription` that is returned from the `subscribe` method. Calling this method will cause the `CancellationToken` parameter of the Hub method (if you provided one) to be canceled.
+
+::: moniker-end
+
+::: moniker range=">= aspnetcore-3.0"
+
+### Client to server streaming
+
+TODO
 
 ::: moniker-end
 
