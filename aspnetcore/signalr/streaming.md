@@ -55,12 +55,12 @@ In ASP.NET Core 2.2 or later, server to client streaming Hub methods can accept 
 
 ### Client to server streaming
 
-A hub method automatically becomes a client to server streaming hub method when it accepts a `ChannelReader<T>`. Below is a sample that shows the basics of reading streaming data from the client. Whenever the client writes to the stream the data is writtin into the `ChannelReader` which the hub method should be reading from.
+A hub method automatically becomes a client to server streaming hub method when it accepts a `ChannelReader<T>`. Below is a sample that shows the basics of reading streaming data from the client. Whenever the client writes to the stream the data is written into the `ChannelReader` on the server which the hub method should be reading from.
 
-```
+```csharp
 public class StreamHub : Hub
 {
-    public async Task ReadStream(ChannelReader<string> stream)
+    public async Task UploadStream(ChannelReader<string> stream)
     {
         while (await stream.WaitToReadAsync())
         {
@@ -130,7 +130,13 @@ Console.WriteLine("Streaming completed");
 
 ### Client to server streaming
 
-TODO
+```csharp
+var channel = Channel.CreateBounded<string>(10);
+await connection.SendAsync("UploadStream", channel.Reader);
+await channel.Writer.WriteAsync("some data");
+await channel.Writer.WriteAsync("some more data");
+await channel.Writer.TryComplete();
+```
 
 ::: moniker-end
 
@@ -163,7 +169,13 @@ To end the stream from the client, call the `dispose` method on the `ISubscripti
 
 ### Client to server streaming
 
-TODO
+```javascript
+const subject = new signalR.Subject();
+await connection.send("UploadStream", subject);
+subject.next("some data");
+subject.next("some more data");
+subject.complete();
+```
 
 ::: moniker-end
 
