@@ -183,13 +183,7 @@ To end the stream from the client, call the `dispose` method on the `ISubscripti
 
 ### Client to server streaming
 
-```javascript
-const subject = new signalR.Subject();
-await connection.send("UploadStream", subject);
-subject.next("some data");
-subject.next("some more data");
-subject.complete();
-```
+[!code-javascript[Upload javascript](streaming/sample.netcoreapp3.0/wwwroot/js/stream.js?range=74-85)]
 
 ::: moniker-end
 
